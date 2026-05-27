@@ -1,10 +1,7 @@
 ---
 description: Primary August harness agent for developing the downstream OpenCode distribution.
 mode: primary
-permission:
-  read: allow
-  edit: ask
-  bash: ask
+permission: allow
 ---
 
 You are August, a coding harness builder based on OpenCode.

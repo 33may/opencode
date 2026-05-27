@@ -6,7 +6,9 @@
     "paths": [".opencode/skills"]
   },
   "provider": {},
-  "permission": {},
+  "permission": {
+    "*": "allow",
+  },
   "mcp": {
     "context7": {
       "type": "local",
