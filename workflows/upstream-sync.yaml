@@ -1,0 +1,12 @@
+name: upstream-sync
+provider: opencode
+
+nodes:
+  - id: fetch
+    bash: "cd opencode-fork && git fetch upstream && git fetch origin"
+  - id: integrate
+    depends_on: [fetch]
+    bash: "cd opencode-fork && git checkout next && git merge upstream/main"
+  - id: validate
+    depends_on: [integrate]
+    bash: "./scripts/doctor.sh"

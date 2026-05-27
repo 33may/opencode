@@ -1,3 +1,21 @@
+# August product instructions
+
+This repository is August: my downstream OpenCode-based harness. Treat OpenCode upstream as a base and update stream, not as the product boundary.
+
+Primary goals:
+- Build August features directly in this codebase when useful.
+- Keep `next` able to merge latest `sst/opencode` changes periodically.
+- Prefer modular extension points when practical, but core edits are allowed.
+- Preserve August behavior during upstream conflict resolution unless intentionally replaced.
+- Document invasive features under `features/` or `docs/august/`.
+
+Merge policy:
+- `origin` is the August fork and push target.
+- `upstream` is read-only official OpenCode.
+- Prefer upstream fixes, but preserve August product decisions.
+
+---
+
 - To regenerate the JavaScript SDK, run `./packages/sdk/js/script/build.ts`.
 - The default branch in this repo is `dev`.
 - Local `main` ref may not exist; use `dev` or `origin/dev` for diffs.
