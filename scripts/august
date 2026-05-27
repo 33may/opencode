@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ "$#" -eq 0 ]; then
+  cd "$ROOT/packages/opencode"
+  exec bun run --conditions=browser src/index.ts "$ROOT"
+fi
+
 cd "$ROOT"
 exec bun --conditions=browser packages/opencode/src/index.ts "$@"
