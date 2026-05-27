@@ -7,7 +7,23 @@
   },
   "provider": {},
   "permission": {},
-  "mcp": {},
+  "mcp": {
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "@upstash/context7-mcp"],
+      "enabled": true,
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["npx", "chrome-devtools-mcp@latest"],
+      "enabled": true,
+    },
+    "huggingface-skills": {
+      "type": "remote",
+      "url": "https://huggingface.co/mcp?login",
+      "enabled": true,
+    },
+  },
   "tools": {
     "github-triage": false,
     "github-pr-search": false,
