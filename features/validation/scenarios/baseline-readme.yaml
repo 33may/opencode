@@ -1,0 +1,19 @@
+id: baseline-readme
+feature: validation
+story: User asks August to inspect the project README and summarize the system.
+workspace:
+  copy:
+    - README.md
+    - AGENTS.md
+    - AUGUST.md
+prompt: |
+  Read README.md and summarize this project in one concise paragraph.
+  Mention whether it is OpenCode, August, or both based only on the file content.
+expected:
+  final_contains_any:
+    - OpenCode
+    - August
+  messages_contain_any:
+    - README
+judge:
+  question: Did the assistant inspect README.md and answer the user story using the available project context?

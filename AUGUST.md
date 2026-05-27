@@ -34,3 +34,11 @@ git push origin next
 ./scripts/doctor.sh
 ./scripts/august agent list --pure
 ```
+
+## Validation
+
+August uses an API-first validation harness for feature-independent real-model scenarios. See `features/validation/README.md`.
+
+```bash
+./scripts/validate-scenario features/validation/scenarios/baseline-readme.yaml
+```
