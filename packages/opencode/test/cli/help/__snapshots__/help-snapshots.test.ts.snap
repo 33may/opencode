@@ -412,6 +412,28 @@ Options:
       --format      Output format                 [string] [choices: "json", "tsv"] [default: "tsv"]"
 `;
 
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task --help 1`] = `
+"opencode task
+
+manage August local tasks
+
+Commands:
+  opencode task create <title>          create an August task
+  opencode task list                    list August tasks
+  opencode task show <id>               show an August task
+  opencode task update <id>             update an August task
+  opencode task comment <id> <body>     comment on an August task
+  opencode task relate <id> <targetID>  relate two August tasks
+  opencode task events <id>             show August task audit events
+
+Options:
+  -h, --help        show help                                                              [boolean]
+  -v, --version     show version number                                                    [boolean]
+      --print-logs  print logs to stderr                                                   [boolean]
+      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure        run without external plugins                                           [boolean]"
+`;
+
 exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode mcp list --help 1`] = `
 "opencode mcp list
 
@@ -620,4 +642,159 @@ Options:
       --print-logs  print logs to stderr                                                   [boolean]
       --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
       --pure        run without external plugins                                           [boolean]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task create --help 1`] = `
+"opencode task create <title>
+
+create an August task
+
+Positionals:
+  title                                                                          [string] [required]
+
+Options:
+  -h, --help         show help                                                             [boolean]
+  -v, --version      show version number                                                   [boolean]
+      --print-logs   print logs to stderr                                                  [boolean]
+      --log-level    log level                  [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure         run without external plugins                                          [boolean]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]
+      --description                                                                         [string]
+      --status
+     [string] [choices: "triage", "backlog", "todo", "in_progress", "in_review", "done", "canceled",
+                                                                                        "duplicate"]
+      --priority                       [string] [choices: "none", "urgent", "high", "medium", "low"]
+      --project                                                                             [string]
+      --label                                                                                [array]
+      --assignee                                                                            [string]
+      --delegate                                                                            [string]
+      --parent-id                                                                           [string]
+      --due-date                                                                            [string]
+      --branch                                                                              [string]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task list --help 1`] = `
+"opencode task list
+
+list August tasks
+
+Options:
+  -h, --help              show help                                                        [boolean]
+  -v, --version           show version number                                              [boolean]
+      --print-logs        print logs to stderr                                             [boolean]
+      --log-level         log level             [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure              run without external plugins                                     [boolean]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]
+      --status
+     [string] [choices: "triage", "backlog", "todo", "in_progress", "in_review", "done", "canceled",
+                                                                                        "duplicate"]
+      --project                                                                             [string]
+      --label                                                                               [string]
+      --assignee                                                                            [string]
+      --delegate                                                                            [string]
+      --parent-id                                                                           [string]
+      --include-archived                                                  [boolean] [default: false]
+      --limit                                                                               [number]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task show --help 1`] = `
+"opencode task show <id>
+
+show an August task
+
+Positionals:
+  id                                                                             [string] [required]
+
+Options:
+  -h, --help        show help                                                              [boolean]
+  -v, --version     show version number                                                    [boolean]
+      --print-logs  print logs to stderr                                                   [boolean]
+      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure        run without external plugins                                           [boolean]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task update --help 1`] = `
+"opencode task update <id>
+
+update an August task
+
+Positionals:
+  id                                                                             [string] [required]
+
+Options:
+  -h, --help         show help                                                             [boolean]
+  -v, --version      show version number                                                   [boolean]
+      --print-logs   print logs to stderr                                                  [boolean]
+      --log-level    log level                  [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure         run without external plugins                                          [boolean]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]
+      --description                                                                         [string]
+      --status
+     [string] [choices: "triage", "backlog", "todo", "in_progress", "in_review", "done", "canceled",
+                                                                                        "duplicate"]
+      --priority                       [string] [choices: "none", "urgent", "high", "medium", "low"]
+      --project                                                                             [string]
+      --label                                                                                [array]
+      --assignee                                                                            [string]
+      --delegate                                                                            [string]
+      --parent-id                                                                           [string]
+      --due-date                                                                            [string]
+      --branch                                                                              [string]
+      --archive                                                                            [boolean]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task comment --help 1`] = `
+"opencode task comment <id> <body>
+
+comment on an August task
+
+Positionals:
+  id                                                                             [string] [required]
+  body                                                                           [string] [required]
+
+Options:
+  -h, --help        show help                                                              [boolean]
+  -v, --version     show version number                                                    [boolean]
+      --print-logs  print logs to stderr                                                   [boolean]
+      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure        run without external plugins                                           [boolean]
+      --author                                                                              [string]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task relate --help 1`] = `
+"opencode task relate <id> <targetID>
+
+relate two August tasks
+
+Positionals:
+  id                                                                             [string] [required]
+  targetID                                                                       [string] [required]
+
+Options:
+  -h, --help        show help                                                              [boolean]
+  -v, --version     show version number                                                    [boolean]
+      --print-logs  print logs to stderr                                                   [boolean]
+      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure        run without external plugins                                           [boolean]
+      --type               [string] [choices: "related", "blocks", "duplicate"] [default: "related"]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]"
+`;
+
+exports[`opencode CLI help-text snapshots every documented command emits stable help text: opencode task events --help 1`] = `
+"opencode task events <id>
+
+show August task audit events
+
+Positionals:
+  id                                                                             [string] [required]
+
+Options:
+  -h, --help        show help                                                              [boolean]
+  -v, --version     show version number                                                    [boolean]
+      --print-logs  print logs to stderr                                                   [boolean]
+      --log-level   log level                   [string] [choices: "DEBUG", "INFO", "WARN", "ERROR"]
+      --pure        run without external plugins                                           [boolean]
+      --format                                  [string] [choices: "text", "json"] [default: "text"]"
 `;
