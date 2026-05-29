@@ -14,3 +14,11 @@ August tasks are stored in the local OpenCode SQLite database and are designed f
 ```
 
 Agents can call the `taskdb` tool directly with actions: `create`, `list`, `show`, `update`, `comment`, `relate`, and `events`.
+
+OpenCode also loads the local `august-taskdb` MCP server from `.opencode/opencode.jsonc`. After restarting `aug`, the same tool is available through MCP as `august_taskdb_taskdb`.
+
+Manual MCP server smoke test:
+
+```bash
+./scripts/august-taskdb-mcp
+```

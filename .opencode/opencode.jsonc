@@ -25,6 +25,11 @@
       "url": "https://huggingface.co/mcp?login",
       "enabled": true,
     },
+    "august-taskdb": {
+      "type": "local",
+      "command": ["bun", "--conditions=browser", "packages/opencode/src/mcp-server/taskdb.ts"],
+      "enabled": true,
+    },
   },
   "tools": {
     "github-triage": false,

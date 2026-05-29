@@ -33,6 +33,8 @@ type Metadata = {
   id?: string
 }
 
+export type TaskDBParams = Schema.Schema.Type<typeof Parameters>
+
 export const TaskDBTool = Tool.define<typeof Parameters, Metadata, Task.Service>(
   "taskdb",
   Effect.gen(function* () {
@@ -50,12 +52,7 @@ export const TaskDBTool = Tool.define<typeof Parameters, Metadata, Task.Service>
             yield* ctx.ask({ permission: "taskdb", patterns: [params.action], always: [params.action], metadata: {} })
           }
 
-          const output = yield* runAction(task, params).pipe(
-            Effect.matchCauseEffect({
-              onSuccess: Effect.succeed,
-              onFailure: (cause) => Effect.succeed({ error: { message: causeMessage(cause) } }),
-            }),
-          )
+          const output = yield* executeAction(task, params)
           return {
             title: title(output),
             output: JSON.stringify(output, null, 2),
@@ -66,9 +63,18 @@ export const TaskDBTool = Tool.define<typeof Parameters, Metadata, Task.Service>
   }),
 )
 
-const runAction = Effect.fn("TaskDBTool.runAction")(function* (
+export const executeAction = Effect.fn("TaskDBTool.executeAction")(function* (task: Task.Interface, params: TaskDBParams) {
+  return yield* runAction(task, params).pipe(
+    Effect.matchCauseEffect({
+      onSuccess: Effect.succeed,
+      onFailure: (cause) => Effect.succeed({ error: { message: causeMessage(cause) } }),
+    }),
+  )
+})
+
+export const runAction = Effect.fn("TaskDBTool.runAction")(function* (
   task: Task.Interface,
-  params: Schema.Schema.Type<typeof Parameters>,
+  params: TaskDBParams,
 ) {
   if (params.action === "create") {
     if (!params.title) return yield* Effect.fail(new Error("taskdb create requires title"))

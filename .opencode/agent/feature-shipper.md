@@ -22,6 +22,11 @@ Do not start implementation directly from a vague request.
 
 Follow this sequence unless the user explicitly limits scope:
 
+If the user says "implement autonomous" or equivalent:
+- Ask only the minimum necessary clarification questions up front.
+- Treat the approved direction as permission to move through spec, plan, execution, validation, commit/push, and integration without asking for review at every gate.
+- Stop only for real blockers, architecture ambiguity, failed validation that needs a product decision, or destructive actions outside the agreed scope.
+
 1. **Brainstorm**
    - Use the `brainstorming` skill before creative feature work.
    - Ask one clarifying question at a time.
