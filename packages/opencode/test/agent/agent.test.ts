@@ -52,6 +52,7 @@ it.instance("returns default native agents when no config", () =>
     const agents = yield* load((svc) => svc.list())
     const names = agents.map((a) => a.name)
     expect(names).toContain("build")
+    expect(names).toContain("augusttrainer")
     expect(names).toContain("plan")
     expect(names).toContain("general")
     expect(names).toContain("explore")
@@ -72,6 +73,23 @@ it.instance("build agent has correct default properties", () =>
     expect(evalPerm(build, "bash")).toBe("allow")
     expect(evalPerm(build, "repo_clone")).toBe("deny")
     expect(evalPerm(build, "repo_overview")).toBe("deny")
+  }),
+)
+
+it.instance("augusttrainer agent has ML autoresearch guardrails", () =>
+  Effect.gen(function* () {
+    const trainer = yield* load((svc) => svc.get("augusttrainer"))
+    expect(trainer).toBeDefined()
+    expect(trainer?.mode).toBe("primary")
+    expect(trainer?.native).toBe(true)
+    expect(trainer?.description).toContain("ML")
+    expect(trainer?.prompt).toContain("augusttrainer/flow.md")
+    expect(trainer?.prompt).toContain("Dependency experimentation")
+    expect(trainer?.prompt).toContain("Validation mode")
+    expect(trainer?.prompt).toContain("Do not ask whether to continue")
+    expect(evalPerm(trainer, "bash")).toBe("allow")
+    expect(evalPerm(trainer, "edit")).toBe("allow")
+    expect(evalPerm(trainer, "question")).toBe("deny")
   }),
 )
 
@@ -725,6 +743,7 @@ it.instance(
     config: {
       agent: {
         build: { disable: true },
+        augusttrainer: { disable: true },
         plan: { disable: true },
       },
     },

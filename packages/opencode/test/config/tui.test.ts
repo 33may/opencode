@@ -130,6 +130,26 @@ it.instance("loads tui config with the same precedence order as server config pa
   ),
 )
 
+it.instance("loads prompt compact config", () =>
+  withCleanState(
+    Effect.gen(function* () {
+      const fs = yield* AppFileSystem.Service
+      const test = yield* TestInstance
+      yield* fs.writeJson(path.join(test.directory, "tui.json"), {
+        prompt: {
+          compact: true,
+          max_height: 2,
+        },
+      })
+
+      expect((yield* getTuiConfig(test.directory)).prompt).toEqual({
+        compact: true,
+        max_height: 2,
+      })
+    }),
+  ),
+)
+
 it.instance("resolves attention config defaults and overrides", () =>
   withCleanState(
     Effect.gen(function* () {

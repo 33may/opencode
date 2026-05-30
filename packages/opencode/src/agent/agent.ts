@@ -9,6 +9,7 @@ import { ProviderTransform } from "@/provider/transform"
 
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
+import PROMPT_AUGUSTTRAINER from "./prompt/augusttrainer.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SCOUT from "./prompt/scout.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
@@ -164,6 +165,17 @@ export const layer = Layer.effect(
             ),
             mode: "primary",
             native: true,
+          },
+          augusttrainer: {
+            name: "augusttrainer",
+            description:
+              "Autonomous ML training researcher that discovers a project train/eval flow and improves the model through an auditable AugustTrainer loop.",
+            prompt: PROMPT_AUGUSTTRAINER,
+            options: {},
+            permission: Permission.merge(defaults, user),
+            mode: "primary",
+            native: true,
+            color: "#4FB477",
           },
           general: {
             name: "general",

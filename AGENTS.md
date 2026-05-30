@@ -9,6 +9,11 @@ Primary goals:
 - Preserve August behavior during upstream conflict resolution unless intentionally replaced.
 - Document invasive features under `features/` or `docs/august/`.
 
+Memory policy:
+- August durable memory lives in repo-owned `.august/memory/`.
+- Keep `.august/memory/MEMORY.md` as the index and split details into focused files nearby.
+- Do not write August project memory to legacy host memory paths.
+
 Merge policy:
 - `origin` is the August fork and push target.
 - `upstream` is read-only official OpenCode.

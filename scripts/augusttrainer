@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/augusttrainer [--project DIR] [--model provider/model] [prompt...]
+
+Launch the native AugustTrainer agent against any ML project directory.
+
+Examples:
+  scripts/augusttrainer --project /path/to/ml-project
+  scripts/augusttrainer --project . --model anthropic/claude-sonnet-4-6
+  scripts/augusttrainer --project . "Validation mode: run exactly one baseline and one hypothesis iteration, then stop."
+USAGE
+}
+
+PROJECT="$(pwd)"
+MODEL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -C|--project|--dir)
+      if [[ $# -lt 2 ]]; then
+        printf 'scripts/augusttrainer: %s requires a directory\n' "$1" >&2
+        exit 1
+      fi
+      PROJECT="$2"
+      shift 2
+      ;;
+    --model)
+      if [[ $# -lt 2 ]]; then
+        printf 'scripts/augusttrainer: --model requires provider/model\n' >&2
+        exit 1
+      fi
+      MODEL_ARGS=(--model "$2")
+      shift 2
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ ! -d "$PROJECT" ]]; then
+  printf 'scripts/augusttrainer: project directory not found: %s\n' "$PROJECT" >&2
+  exit 1
+fi
+
+PROJECT="$(cd "$PROJECT" && pwd)"
+
+PROMPT="$*"
+if [[ -z "$PROMPT" ]]; then
+  PROMPT="Start AugustTrainer in autonomous overnight mode. Inspect this ML project, write augusttrainer/flow.md, establish a baseline, then keep improving the model until I stop you."
+fi
+
+exec "$ROOT/scripts/august" run \
+  --dir "$PROJECT" \
+  --agent augusttrainer \
+  --dangerously-skip-permissions \
+  --title "augusttrainer: $(basename "$PROJECT")" \
+  "${MODEL_ARGS[@]}" \
+  "$PROMPT"

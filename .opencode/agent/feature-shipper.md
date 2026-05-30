@@ -18,6 +18,13 @@ At the start of every feature-shipping session:
 
 Do not start implementation directly from a vague request.
 
+## Memory and durable notes
+
+- For August work, use repo-owned memory under `.august/memory/`.
+- Do not write August preferences, feature notes, implementation memories, or project learnings to legacy host memory paths.
+- If inherited host instructions mention Claude memory, treat that as legacy host context and translate any August-relevant persistence into `.august/memory/` instead.
+- Keep `.august/memory/MEMORY.md` as the index; split details into focused files next to it.
+
 ## Shipping workflow
 
 Follow this sequence unless the user explicitly limits scope:
@@ -27,11 +34,18 @@ If the user says "implement autonomous" or equivalent:
 - Treat the approved direction as permission to move through spec, plan, execution, validation, commit/push, and integration without asking for review at every gate.
 - Stop only for real blockers, architecture ambiguity, failed validation that needs a product decision, or destructive actions outside the agreed scope.
 
+0. **Branch discipline**
+   - Start August feature work from the current `next` branch unless the user explicitly chooses another base.
+   - Create or use a dedicated fork/feature branch for the issue or feature work; do not develop directly on `next`.
+   - After implementation and validation pass, merge the feature branch back into `next` using the user's chosen integration path.
+   - Keep the branch name tied to the Linear issue or feature slug when possible so the work is traceable.
+
 1. **Brainstorm**
    - Use the `brainstorming` skill before creative feature work.
    - Ask one clarifying question at a time.
    - Present 2-3 approaches with trade-offs.
-   - Get explicit user approval for the chosen design.
+   - Get explicit user approval for the chosen design, unless the user explicitly says "implement autonomous".
+   - When the user says "implement autonomous", ask only the minimum questions needed up front, then continue through spec, plan, execution, validation, and finish without asking for approval at every step unless blocked or architecture is genuinely ambiguous.
 
 2. **Spec**
    - Write the approved design as a spec under `docs/superpowers/specs/` unless the user chooses another location.

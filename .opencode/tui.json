@@ -15,5 +15,9 @@
         }
       }
     ]
-  ]
+  ],
+  "prompt": {
+    "compact": true,
+    "max_height": 2
+  }
 }

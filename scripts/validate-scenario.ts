@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import path from "node:path"
 
-type Scenario = {
+export type Scenario = {
   id: string
   feature?: string
   story: string
@@ -11,90 +11,97 @@ type Scenario = {
     final_contains_any?: string[]
     messages_contain_any?: string[]
     tool_calls?: string[]
+    files_exist?: string[]
+    files_contain?: string[]
   }
   judge?: { question?: string }
 }
 
 const root = path.resolve(import.meta.dir, "..")
-const scenarioPath = process.argv[2]
 
-if (!scenarioPath) {
-  console.error("Usage: scripts/validate-scenario <scenario.yaml>")
-  process.exit(1)
-}
+if (import.meta.main) await main()
 
-const scenario = parseScenario(await Bun.file(path.resolve(scenarioPath)).text())
-const runDir = path.join(
-  root,
-  process.env.AUGUST_RUN_ROOT ?? ".august/runs",
-  `${new Date().toISOString().replaceAll(":", "-").replace(/\.\d+Z$/, "Z")}-${scenario.id}`,
-)
-const workspace = path.join(runDir, "workspace")
-const events: unknown[] = []
+async function main() {
+  const scenarioPath = process.argv[2]
 
-await prepareRunDirectory(runDir, workspace, scenario)
-
-const server = Bun.spawn([path.join(root, "scripts/august"), "serve", "--hostname", "127.0.0.1", "--port", "0"], {
-  cwd: root,
-  stdout: "pipe",
-  stderr: "pipe",
-  env: process.env,
-})
-
-try {
-  const baseUrl = await waitForServerUrl(server)
-  const eventAbort = new AbortController()
-  const eventStream = captureEvents(baseUrl, workspace, events, eventAbort.signal)
-  const model = parseModel(process.env.AUGUST_VALIDATE_MODEL)
-  const session = await api(baseUrl, workspace, "/session", {
-    method: "POST",
-    body: {
-      title: scenario.id,
-      permission: [{ permission: "*", pattern: "*", action: "allow" }],
-    },
-  })
-  const sessionID = String(asRecord(session).id)
-  const prompt = await api(baseUrl, workspace, `/session/${sessionID}/message`, {
-    method: "POST",
-    body: {
-      agent: process.env.AUGUST_VALIDATE_AGENT ?? "build",
-      ...(model ? { model } : {}),
-      parts: [{ type: "text", text: scenario.prompt }],
-    },
-  })
-  const messages = await api(baseUrl, workspace, `/session/${sessionID}/message`)
-  eventAbort.abort()
-  await eventStream.catch(() => undefined)
-
-  const finalText = collectText(prompt) || lastAssistantText(messages)
-  const toolCalls = collectToolCalls(messages)
-  const hard = hardAssertions({ scenario, finalText, messages, toolCalls })
-  const judge = scenario.judge?.question
-    ? await runJudge({ baseUrl, workspace, scenario, finalText, messages, toolCalls, model })
-    : undefined
-  const result = {
-    id: scenario.id,
-    feature: scenario.feature,
-    ok: hard.ok && judge?.verdict !== "fail",
-    hard,
-    judge: judge ? { verdict: judge.verdict } : undefined,
-    sessionID,
-    runDir,
+  if (!scenarioPath) {
+    console.error("Usage: scripts/validate-scenario <scenario.yaml>")
+    process.exit(1)
   }
 
-  await writeJson(path.join(runDir, "messages.json"), messages)
-  await writeJson(path.join(runDir, "tool-calls.json"), toolCalls)
-  await Bun.write(path.join(runDir, "events.jsonl"), events.map((event) => JSON.stringify(event)).join("\n"))
-  await Bun.write(path.join(runDir, "transcript.jsonl"), messagesToJsonl(messages))
-  await Bun.write(path.join(runDir, "final.md"), finalText || "")
-  await Bun.write(path.join(runDir, "judge.md"), judge?.text ?? "")
-  await writeJson(path.join(runDir, "result.json"), result)
+  const scenario = parseScenario(await Bun.file(path.resolve(scenarioPath)).text())
+  const runDir = path.join(
+    root,
+    process.env.AUGUST_RUN_ROOT ?? ".august/runs",
+    `${new Date().toISOString().replaceAll(":", "-").replace(/\.\d+Z$/, "Z")}-${scenario.id}`,
+  )
+  const workspace = path.join(runDir, "workspace")
+  const events: unknown[] = []
 
-  console.log(`${result.ok ? "PASS" : "FAIL"} ${scenario.id}`)
-  console.log(runDir)
-  if (!result.ok) process.exit(1)
-} finally {
-  server.kill()
+  await prepareRunDirectory(runDir, workspace, scenario, scenarioPath)
+
+  const server = Bun.spawn([path.join(root, "scripts/august"), "serve", "--hostname", "127.0.0.1", "--port", "0"], {
+    cwd: root,
+    stdout: "pipe",
+    stderr: "pipe",
+    env: process.env,
+  })
+
+  try {
+    const baseUrl = await waitForServerUrl(server)
+    const eventAbort = new AbortController()
+    const eventStream = captureEvents(baseUrl, workspace, events, eventAbort.signal)
+    const model = parseModel(process.env.AUGUST_VALIDATE_MODEL)
+    const session = await api(baseUrl, workspace, "/session", {
+      method: "POST",
+      body: {
+        title: scenario.id,
+        permission: [{ permission: "*", pattern: "*", action: "allow" }],
+      },
+    })
+    const sessionID = String(asRecord(session).id)
+    const prompt = await api(baseUrl, workspace, `/session/${sessionID}/message`, {
+      method: "POST",
+      body: {
+        agent: process.env.AUGUST_VALIDATE_AGENT ?? "build",
+        ...(model ? { model } : {}),
+        parts: [{ type: "text", text: scenario.prompt }],
+      },
+    })
+    const messages = await api(baseUrl, workspace, `/session/${sessionID}/message`)
+    eventAbort.abort()
+    await eventStream.catch(() => undefined)
+
+    const finalText = collectText(prompt) || lastAssistantText(messages)
+    const toolCalls = collectToolCalls(messages)
+    const hard = await hardAssertions({ scenario, finalText, messages, toolCalls, workspace })
+    const judge = scenario.judge?.question
+      ? await runJudge({ baseUrl, workspace, scenario, finalText, messages, toolCalls, model })
+      : undefined
+    const result = {
+      id: scenario.id,
+      feature: scenario.feature,
+      ok: hard.ok && judge?.verdict !== "fail",
+      hard,
+      judge: judge ? { verdict: judge.verdict } : undefined,
+      sessionID,
+      runDir,
+    }
+
+    await writeJson(path.join(runDir, "messages.json"), messages)
+    await writeJson(path.join(runDir, "tool-calls.json"), toolCalls)
+    await Bun.write(path.join(runDir, "events.jsonl"), events.map((event) => JSON.stringify(event)).join("\n"))
+    await Bun.write(path.join(runDir, "transcript.jsonl"), messagesToJsonl(messages))
+    await Bun.write(path.join(runDir, "final.md"), finalText || "")
+    await Bun.write(path.join(runDir, "judge.md"), judge?.text ?? "")
+    await writeJson(path.join(runDir, "result.json"), result)
+
+    console.log(`${result.ok ? "PASS" : "FAIL"} ${scenario.id}`)
+    console.log(runDir)
+    if (!result.ok) process.exit(1)
+  } finally {
+    server.kill()
+  }
 }
 
 function parseScenario(input: string): Scenario {
@@ -139,10 +146,10 @@ function parseScenario(input: string): Scenario {
   return data as Scenario
 }
 
-async function prepareRunDirectory(runDir: string, workspace: string, scenario: Scenario) {
+async function prepareRunDirectory(runDir: string, workspace: string, scenario: Scenario, scenarioPath: string) {
   await Bun.write(path.join(runDir, ".keep"), "")
   await Bun.write(path.join(workspace, ".keep"), "")
-  await Bun.write(path.join(runDir, "scenario.yaml"), await Bun.file(path.resolve(scenarioPath!)).text())
+  await Bun.write(path.join(runDir, "scenario.yaml"), await Bun.file(path.resolve(scenarioPath)).text())
   for (const file of scenario.workspace?.copy ?? []) {
     const from = path.join(root, file)
     const to = path.join(workspace, file)
@@ -241,7 +248,7 @@ function parseModel(input?: string) {
   return { providerID, modelID }
 }
 
-function hardAssertions(input: { scenario: Scenario; finalText: string; messages: unknown; toolCalls: unknown[] }) {
+export async function hardAssertions(input: { scenario: Scenario; finalText: string; messages: unknown; toolCalls: unknown[]; workspace: string }) {
   const failures = [] as string[]
   const allMessages = JSON.stringify(input.messages)
   if (!input.finalText.trim()) failures.push("final answer is empty")
@@ -257,7 +264,42 @@ function hardAssertions(input: { scenario: Scenario; finalText: string; messages
   for (const tool of input.scenario.expected?.tool_calls ?? []) {
     if (!input.toolCalls.some((call) => JSON.stringify(call).includes(tool))) failures.push(`missing tool call: ${tool}`)
   }
+  for (const file of input.scenario.expected?.files_exist ?? []) {
+    const resolved = resolveWorkspaceFile(input.workspace, file)
+    if (!resolved) {
+      failures.push(`expected file path escapes workspace: ${file}`)
+      continue
+    }
+    if (!(await Bun.file(resolved).exists())) failures.push(`missing expected file: ${file}`)
+  }
+  for (const entry of input.scenario.expected?.files_contain ?? []) {
+    const split = entry.indexOf("::")
+    if (split === -1) {
+      failures.push(`invalid files_contain assertion: ${entry}`)
+      continue
+    }
+    const file = entry.slice(0, split)
+    const needle = entry.slice(split + 2)
+    const resolved = resolveWorkspaceFile(input.workspace, file)
+    if (!resolved) {
+      failures.push(`expected file path escapes workspace: ${file}`)
+      continue
+    }
+    if (!(await Bun.file(resolved).exists())) {
+      failures.push(`missing expected file: ${file}`)
+      continue
+    }
+    if (!containsAny(await Bun.file(resolved).text(), [needle])) {
+      failures.push(`expected ${file} to contain: ${needle}`)
+    }
+  }
   return { ok: failures.length === 0, failures }
+}
+
+function resolveWorkspaceFile(workspace: string, file: string) {
+  const workspaceRoot = path.resolve(workspace)
+  const resolved = path.resolve(workspaceRoot, file)
+  if (resolved === workspaceRoot || resolved.startsWith(`${workspaceRoot}${path.sep}`)) return resolved
 }
 
 function containsAny(value: string, needles: string[]) {
