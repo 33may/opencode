@@ -1,0 +1,54 @@
+id: augusttrainer-fake-ml
+feature: augusttrainer
+story: AugustTrainer runs a bounded validation pass on a fake ML project and records the lab notebook artifacts.
+workspace:
+  copy:
+    - features/validation/fixtures/augusttrainer-fake-ml/README.md
+    - features/validation/fixtures/augusttrainer-fake-ml/model_config.json
+    - features/validation/fixtures/augusttrainer-fake-ml/train.py
+prompt: |
+  Validation mode for AugustTrainer.
+
+  Work inside features/validation/fixtures/augusttrainer-fake-ml as the target ML project.
+  Run exactly one baseline and one hypothesis iteration, then stop.
+
+  Requirements:
+  - create the project-local augusttrainer/ folder inside that fake ML project
+  - write augusttrainer/flow.md with train command, metric, direction, editable files, protected files, dependency policy, timeout, and keep/revert rules
+  - use python3 train.py as the train command
+  - use val_loss as the metric, lower is better
+  - keep train.py and README.md protected
+  - record results in results.tsv and results.jsonl
+  - change only model_config.json for the one hypothesis iteration
+  - for the one hypothesis iteration, set quality_bonus in model_config.json to 0.4
+  - do not run quality_bonus 0.2, quality_bonus 0.6, or any extra hypothesis
+  - after the one hypothesis result is recorded, stop immediately
+  - summarize the artifact paths when done
+expected:
+  final_contains_any:
+    - 0.600000
+  messages_contain_any:
+    - 0.600000
+  tool_calls:
+    - bash
+    - write
+    - python3 train.py
+    - model_config.json
+    - augusttrainer/flow.md
+    - augusttrainer/results.tsv
+    - augusttrainer/results.jsonl
+    - quality_bonus
+    - 0.600000
+  files_exist:
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/flow.md
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.tsv
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/decisions.md
+  files_contain:
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/flow.md::python3 train.py
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/flow.md::val_loss
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.tsv::0.600000
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl::quality_bonus
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl::metric
+judge:
+  question: Did AugustTrainer create the lab notebook contract, run the fake metric flow, and stop after the requested bounded validation iteration?
