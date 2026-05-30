@@ -1468,6 +1468,7 @@ export function Prompt(props: PromptProps) {
     }
   })
   const maxHeight = createMemo(() => tuiConfig.prompt?.max_height ?? Math.max(6, Math.floor(dimensions().height / 3)))
+  const compact = createMemo(() => tuiConfig.prompt?.compact === true)
 
   return (
     <>
@@ -1484,10 +1485,10 @@ export function Prompt(props: PromptProps) {
           <box
             paddingLeft={2}
             paddingRight={2}
-            paddingTop={1}
+            paddingTop={compact() ? 0 : 1}
             flexShrink={0}
             backgroundColor={theme.backgroundElement}
-            flexGrow={1}
+            flexGrow={compact() ? 0 : 1}
             width="100%"
           >
             <textarea
@@ -1563,9 +1564,10 @@ export function Prompt(props: PromptProps) {
               cursorColor={props.disabled ? theme.backgroundElement : theme.text}
               syntaxStyle={syntax()}
             />
-            <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1} justifyContent="space-between">
-              <box flexDirection="row" gap={1}>
-                <Show when={local.agent.current()} fallback={<box height={1} />}>
+            <Show when={!compact()}>
+              <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1} justifyContent="space-between">
+                <box flexDirection="row" gap={1}>
+                  <Show when={local.agent.current()} fallback={<box height={1} />}>
                   {(agent) => (
                     <>
                       <text fg={fadeColor(highlight(), agentMetaAlpha())}>
@@ -1593,14 +1595,15 @@ export function Prompt(props: PromptProps) {
                       </Show>
                     </>
                   )}
+                  </Show>
+                </box>
+                <Show when={hasRightContent()}>
+                  <box flexDirection="row" gap={1} alignItems="center">
+                    {props.right}
+                  </box>
                 </Show>
               </box>
-              <Show when={hasRightContent()}>
-                <box flexDirection="row" gap={1} alignItems="center">
-                  {props.right}
-                </box>
-              </Show>
-            </box>
+            </Show>
           </box>
         </box>
         <box

@@ -64,6 +64,7 @@ export const Attention = Schema.Struct({
 const PromptSize = Schema.Int.check(Schema.isGreaterThan(0))
 
 export const Prompt = Schema.Struct({
+  compact: Schema.optional(Schema.Boolean).annotate({ description: "Reduce passive prompt padding and metadata spacing" }),
   max_height: Schema.optional(PromptSize).annotate({ description: "Prompt textarea max height" }),
   max_width: Schema.optional(Schema.Union([PromptSize, Schema.Literal("auto")])).annotate({
     description: "Home prompt max width: a positive integer for a fixed cap, or 'auto' to scale with terminal width",
