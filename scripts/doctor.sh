@@ -15,4 +15,4 @@ printf "august/opencode: "
 ./scripts/august --version
 
 echo
-./scripts/august agent list --pure | grep -E '^(august|build|plan|general|explore) ' || true
+./scripts/august agent list --pure | grep -E '^(august[^ ]*|build|plan|general|explore) ' || true

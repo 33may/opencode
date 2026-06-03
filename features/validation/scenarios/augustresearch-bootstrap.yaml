@@ -1,0 +1,56 @@
+id: augustresearch-bootstrap
+feature: augustresearch
+agent: augustresearch
+story: AugustResearch runs a bounded research/bootstrap pass, creates the project-local notebook, critiques approaches, makes one safe prototype edit, and writes a final bootstrap handoff.
+workspace:
+  copy:
+    - features/validation/fixtures/augustresearch-bootstrap/README.md
+    - features/validation/fixtures/augustresearch-bootstrap/research-target.json
+prompt: |
+  Validation mode for AugustResearch.
+
+  Work inside features/validation/fixtures/augustresearch-bootstrap as the target project.
+  Perform exactly one bounded research/bootstrap round, make exactly one safe prototype edit, then stop.
+
+  Requirements:
+  - use the stable run id `validation` for this run and write augustresearch/runs/validation/checkpoint.md
+  - create the project-local augustresearch/ folder inside that fixture project
+  - write augustresearch/brief.md, source-map.md, approach-map.md, knowledge-map.md, critique-log.md, decisions.md, and final-bootstrap.md
+  - inspect README.md and research-target.json before editing
+  - record local source evidence and include a GitHub source-mining entry; if network is unavailable, explicitly record GitHub as a skipped or simulated validation lane with the blocker
+  - compare at least two approaches for enabling the fixture feature flag
+  - run council critique and include objections, failure modes, counterarguments, unresolved questions, and rejected approaches
+  - make one safe prototype edit only to research-target.json: set prototypeEnabled to true and add the note "augustresearch prototype validated"
+  - record the prototype hypothesis, changed file, diff summary, validation result, and keep/discard decision under augustresearch/
+  - write final-bootstrap.md with a recommended approach, alternatives considered, risks, and next steps
+  - include the exact sentinel AUGUSTRESEARCH_VALIDATION_DONE in final-bootstrap.md and in your final answer
+expected:
+  final_contains_any:
+    - AUGUSTRESEARCH_VALIDATION_DONE
+  messages_contain_any:
+    - AUGUSTRESEARCH_VALIDATION_DONE
+  files_exist:
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/brief.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/source-map.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/approach-map.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/knowledge-map.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/critique-log.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/decisions.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/final-bootstrap.md
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/runs/validation/checkpoint.md
+  files_contain:
+    - features/validation/fixtures/augustresearch-bootstrap/research-target.json::"prototypeEnabled": true
+    - features/validation/fixtures/augustresearch-bootstrap/research-target.json::augustresearch prototype validated
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/source-map.md::GitHub
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/approach-map.md::approach
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/critique-log.md::critique
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/decisions.md::prototype
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/decisions.md::research-target.json
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/decisions.md::Validation result
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/decisions.md::Keep/discard decision
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/final-bootstrap.md::recommended
+    - features/validation/fixtures/augustresearch-bootstrap/augustresearch/final-bootstrap.md::AUGUSTRESEARCH_VALIDATION_DONE
+  files_unchanged:
+    - features/validation/fixtures/augustresearch-bootstrap/README.md
+judge:
+  question: Did AugustResearch create the required research notebook, compare approaches, perform council critique, make only the requested safe prototype edit, and stop after the bounded final bootstrap?

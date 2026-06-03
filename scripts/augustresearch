@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+usage() {
+  cat <<'USAGE'
+Usage: scripts/augustresearch [--project DIR] [--model provider/model] [--dangerously-skip-permissions] [prompt...]
+
+Launch the native AugustResearch agent against any project directory.
+
+Examples:
+  scripts/augustresearch --project /path/to/project
+  scripts/augustresearch --project . --model anthropic/claude-sonnet-4-6
+  scripts/augustresearch --project . --dangerously-skip-permissions "Run without permission prompts."
+  scripts/augustresearch --project . "Validation mode: compare two approaches, make one safe prototype edit, then stop."
+USAGE
+}
+
+PROJECT="$(pwd)"
+MODEL_ARGS=()
+PERMISSION_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -C|--project|--dir)
+      if [[ $# -lt 2 ]]; then
+        printf 'scripts/augustresearch: %s requires a directory\n' "$1" >&2
+        exit 1
+      fi
+      PROJECT="$2"
+      shift 2
+      ;;
+    --model)
+      if [[ $# -lt 2 ]]; then
+        printf 'scripts/augustresearch: --model requires provider/model\n' >&2
+        exit 1
+      fi
+      MODEL_ARGS=(--model "$2")
+      shift 2
+      ;;
+    --dangerously-skip-permissions|--yes)
+      PERMISSION_ARGS=(--dangerously-skip-permissions)
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if [[ ! -d "$PROJECT" ]]; then
+  printf 'scripts/augustresearch: project directory not found: %s\n' "$PROJECT" >&2
+  exit 1
+fi
+
+PROJECT="$(cd "$PROJECT" && pwd)"
+
+PROMPT="$*"
+if [[ -z "$PROMPT" ]]; then
+  PROMPT="Start AugustResearch in autonomous mode. Inspect this project, create augustresearch/ artifacts, research local/web/GitHub approaches, run council critique, make only hypothesis-bound safe prototype edits when useful, checkpoint after each round, then write augustresearch/final-bootstrap.md."
+fi
+
+exec "$ROOT/scripts/august" run \
+  --dir "$PROJECT" \
+  --agent augustresearch \
+  --title "augustresearch: $(basename "$PROJECT")" \
+  "${PERMISSION_ARGS[@]}" \
+  "${MODEL_ARGS[@]}" \
+  "$PROMPT"

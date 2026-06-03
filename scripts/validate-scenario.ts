@@ -4,6 +4,7 @@ import path from "node:path"
 export type Scenario = {
   id: string
   feature?: string
+  agent?: string
   story: string
   prompt: string
   workspace?: { copy?: string[] }
@@ -13,6 +14,7 @@ export type Scenario = {
     tool_calls?: string[]
     files_exist?: string[]
     files_contain?: string[]
+    files_unchanged?: string[]
   }
   judge?: { question?: string }
 }
@@ -63,7 +65,7 @@ async function main() {
     const prompt = await api(baseUrl, workspace, `/session/${sessionID}/message`, {
       method: "POST",
       body: {
-        agent: process.env.AUGUST_VALIDATE_AGENT ?? "build",
+        agent: scenarioAgent(scenario),
         ...(model ? { model } : {}),
         parts: [{ type: "text", text: scenario.prompt }],
       },
@@ -104,7 +106,7 @@ async function main() {
   }
 }
 
-function parseScenario(input: string): Scenario {
+export function parseScenario(input: string): Scenario {
   const lines = input.replaceAll("\r\n", "\n").split("\n")
   const data: Record<string, unknown> = {}
   for (let i = 0; i < lines.length; i++) {
@@ -144,6 +146,10 @@ function parseScenario(input: string): Scenario {
     throw new Error("scenario requires id, story, and prompt")
   }
   return data as Scenario
+}
+
+export function scenarioAgent(scenario: Scenario, env?: { AUGUST_VALIDATE_AGENT?: string }) {
+  return (env ? env.AUGUST_VALIDATE_AGENT : process.env.AUGUST_VALIDATE_AGENT) ?? scenario.agent ?? "build"
 }
 
 async function prepareRunDirectory(runDir: string, workspace: string, scenario: Scenario, scenarioPath: string) {
@@ -291,6 +297,25 @@ export async function hardAssertions(input: { scenario: Scenario; finalText: str
     }
     if (!containsAny(await Bun.file(resolved).text(), [needle])) {
       failures.push(`expected ${file} to contain: ${needle}`)
+    }
+  }
+  for (const file of input.scenario.expected?.files_unchanged ?? []) {
+    const resolved = resolveWorkspaceFile(input.workspace, file)
+    if (!resolved) {
+      failures.push(`expected file path escapes workspace: ${file}`)
+      continue
+    }
+    if (!(await Bun.file(resolved).exists())) {
+      failures.push(`missing expected file: ${file}`)
+      continue
+    }
+    const source = path.join(root, file)
+    if (!(await Bun.file(source).exists())) {
+      failures.push(`missing source file for unchanged assertion: ${file}`)
+      continue
+    }
+    if ((await Bun.file(resolved).text()) !== (await Bun.file(source).text())) {
+      failures.push(`expected file to remain unchanged: ${file}`)
     }
   }
   return { ok: failures.length === 0, failures }

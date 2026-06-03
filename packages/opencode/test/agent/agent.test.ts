@@ -52,6 +52,7 @@ it.instance("returns default native agents when no config", () =>
     const agents = yield* load((svc) => svc.list())
     const names = agents.map((a) => a.name)
     expect(names).toContain("build")
+    expect(names).toContain("augustresearch")
     expect(names).toContain("augusttrainer")
     expect(names).toContain("plan")
     expect(names).toContain("general")
@@ -90,6 +91,40 @@ it.instance("augusttrainer agent has ML autoresearch guardrails", () =>
     expect(evalPerm(trainer, "bash")).toBe("allow")
     expect(evalPerm(trainer, "edit")).toBe("allow")
     expect(evalPerm(trainer, "question")).toBe("deny")
+  }),
+)
+
+it.instance("augustresearch agent has autonomous research guardrails", () =>
+  Effect.gen(function* () {
+    const research = yield* load((svc) => svc.get("augustresearch"))
+    const trainer = yield* load((svc) => svc.get("augusttrainer"))
+    expect(research).toBeDefined()
+    expect(trainer).toBeDefined()
+    expect(research?.mode).toBe("primary")
+    expect(research?.native).toBe(true)
+    expect(research?.description).toContain("research")
+    expect(research?.prompt).not.toBe(trainer?.prompt)
+    expect(research?.prompt).toContain("augustresearch/")
+    expect(research?.prompt).toContain("Broad source exploration")
+    expect(research?.prompt).toContain("GitHub solution mining")
+    expect(research?.prompt).toContain("Council critique protocol")
+    expect(research?.prompt).toContain("Editable prototype workflow")
+    expect(research?.prompt).toContain("Checkpoint and resume")
+    expect(research?.prompt).toContain("Final bootstrap package")
+    expect(evalPerm(research, "bash")).toBe("allow")
+    expect(evalPerm(research, "edit")).toBe("allow")
+    expect(evalPerm(research, "webfetch")).toBe("allow")
+    expect(evalPerm(research, "websearch")).toBe("allow")
+    expect(evalPerm(research, "repo_clone")).toBe("allow")
+    expect(evalPerm(research, "repo_overview")).toBe("allow")
+    expect(
+      Permission.evaluate(
+        "external_directory",
+        path.join(Global.Path.repos, "github.com", "owner", "repo", "README.md"),
+        research!.permission,
+      ).action,
+    ).toBe("allow")
+    expect(evalPerm(research, "question")).toBe("deny")
   }),
 )
 
@@ -743,6 +778,7 @@ it.instance(
     config: {
       agent: {
         build: { disable: true },
+        augustresearch: { disable: true },
         augusttrainer: { disable: true },
         plan: { disable: true },
       },

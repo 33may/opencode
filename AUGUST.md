@@ -35,6 +35,28 @@ git push origin next
 ./scripts/august agent list --pure
 ```
 
+## Initialize another project
+
+Use the local August checkout as an OpenCode wrapper in any project:
+
+```bash
+cd /path/to/other-project
+/path/to/august/scripts/august init
+/path/to/august/scripts/august
+```
+
+This installs project-local August/OpenCode defaults plus OpenSpec OPSX commands and skills. See `features/august-init/README.md`.
+
+## Autonomous research
+
+Use AugustResearch for broad implementation research, GitHub/web/local source mapping, council critique, bounded prototype edits, and final handoff packages:
+
+```bash
+/path/to/august/scripts/augustresearch --project /path/to/project "Research feature X and write a bootstrap plan."
+```
+
+It creates a project-local `augustresearch/` notebook. See `features/augustresearch/README.md`.
+
 ## Validation
 
 August uses an API-first validation harness for feature-independent real-model scenarios. See `features/validation/README.md`.

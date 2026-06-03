@@ -112,10 +112,54 @@ describe("tool.registry", () => {
   it.instance("hides repo research tools unless experimental", () =>
     Effect.gen(function* () {
       const registry = yield* ToolRegistry.Service
+      const agent = yield* Agent.Service
       const ids = yield* registry.ids()
+      const build = yield* agent.get("build")
+      if (!build) throw new Error("build agent not found")
+      const promptIds = (yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: build,
+      })).map((tool) => tool.id)
 
       expect(ids).not.toContain("repo_clone")
       expect(ids).not.toContain("repo_overview")
+      expect(promptIds).not.toContain("repo_clone")
+      expect(promptIds).not.toContain("repo_overview")
+    }),
+  )
+
+  it.instance("shows repo research tools to augustresearch without global scout", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agent = yield* Agent.Service
+      const research = yield* agent.get("augustresearch")
+      if (!research) throw new Error("augustresearch agent not found")
+      const ids = (yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: research,
+      })).map((tool) => tool.id)
+
+      expect(ids).toContain("repo_clone")
+      expect(ids).toContain("repo_overview")
+    }),
+  )
+
+  it.instance("shows repo research tools based on permissions rather than agent name", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agent = yield* Agent.Service
+      const research = yield* agent.get("augustresearch")
+      if (!research) throw new Error("augustresearch agent not found")
+      const ids = (yield* registry.tools({
+        providerID: ProviderID.opencode,
+        modelID: ModelID.make("test"),
+        agent: { ...research, name: "renamed-augustresearch" },
+      })).map((tool) => tool.id)
+
+      expect(ids).toContain("repo_clone")
+      expect(ids).toContain("repo_overview")
     }),
   )
 

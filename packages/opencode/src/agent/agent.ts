@@ -9,6 +9,7 @@ import { ProviderTransform } from "@/provider/transform"
 
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
+import PROMPT_AUGUSTRESEARCH from "./prompt/augustresearch.txt"
 import PROMPT_AUGUSTTRAINER from "./prompt/augusttrainer.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_SCOUT from "./prompt/scout.txt"
@@ -176,6 +177,27 @@ export const layer = Layer.effect(
             mode: "primary",
             native: true,
             color: "#4FB477",
+          },
+          augustresearch: {
+            name: "augustresearch",
+            description:
+              "Autonomous research stack that explores local code, docs, GitHub solutions, critique, and safe prototypes into an auditable bootstrap package.",
+            prompt: PROMPT_AUGUSTRESEARCH,
+            options: {},
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                repo_clone: "allow",
+                repo_overview: "allow",
+                external_directory: {
+                  [path.join(Global.Path.repos, "*")]: "allow",
+                },
+              }),
+              user,
+            ),
+            mode: "primary",
+            native: true,
+            color: "#8A7CFF",
           },
           general: {
             name: "general",
