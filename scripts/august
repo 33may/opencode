@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-if [ "$#" -eq 0 ]; then
-  cd "$ROOT/packages/opencode"
-  exec bun run --conditions=browser src/index.ts "$ROOT"
+CALLER_CWD="$(pwd -P)"
+
+if [[ "${1:-}" == "init" || "${1:-}" == "setup" ]]; then
+  shift
+  exec bun "$ROOT/scripts/august-init-project.ts" "$@"
 fi
 
-cd "$ROOT"
-exec bun --conditions=browser packages/opencode/src/index.ts "$@"
+cd "$ROOT/packages/opencode"
+AUGUST_CALLER_CWD="$CALLER_CWD" exec bun --conditions=browser --eval '
+process.chdir(process.env.AUGUST_CALLER_CWD ?? process.cwd())
+process.argv.splice(1, 0, "src/index.ts")
+await import("./src/index.ts")
+' -- "$@"

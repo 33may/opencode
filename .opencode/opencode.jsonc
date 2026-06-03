@@ -1,38 +1,54 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "default_agent": "august",
-  "instructions": ["AGENTS.md", "AUGUST.md"],
+  "instructions": [
+    "AGENTS.md",
+    "AUGUST.md"
+  ],
   "skills": {
-    "paths": [".opencode/skills"]
+    "paths": [
+      ".opencode/skills"
+    ]
   },
   "provider": {},
   "permission": {
-    "*": "allow",
+    "*": "allow"
   },
   "mcp": {
     "context7": {
       "type": "local",
-      "command": ["npx", "-y", "@upstash/context7-mcp"],
-      "enabled": true,
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp"
+      ],
+      "enabled": true
     },
     "chrome-devtools": {
       "type": "local",
-      "command": ["npx", "chrome-devtools-mcp@latest"],
-      "enabled": true,
+      "command": [
+        "npx",
+        "chrome-devtools-mcp@latest"
+      ],
+      "enabled": true
     },
     "huggingface-skills": {
       "type": "remote",
       "url": "https://huggingface.co/mcp?login",
-      "enabled": true,
+      "enabled": true
     },
     "august-taskdb": {
       "type": "local",
-      "command": ["bun", "--conditions=browser", "packages/opencode/src/mcp-server/taskdb.ts"],
-      "enabled": true,
-    },
+      "command": [
+        "bun",
+        "--conditions=browser",
+        "packages/opencode/src/mcp-server/taskdb.ts"
+      ],
+      "enabled": true
+    }
   },
   "tools": {
     "github-triage": false,
-    "github-pr-search": false,
-  },
+    "github-pr-search": false
+  }
 }

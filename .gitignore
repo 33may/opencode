@@ -24,6 +24,7 @@ a.out
 target
 .scripts
 .direnv/
+.venv/
 
 # Local dev files
 opencode-dev

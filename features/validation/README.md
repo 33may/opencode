@@ -41,6 +41,8 @@ expected:
     - August
   messages_contain_any:
     - README
+  files_unchanged:
+    - README.md
 judge:
   question: Did the assistant inspect README.md and answer the user story?
 ```
@@ -88,6 +90,7 @@ The first result layer is hard evidence:
 - prompt completed
 - messages were captured
 - expected strings or tool calls were observed
+- expected workspace files exist, contain required text, or remain unchanged from their copied source
 
 The second layer is behavioral judgment:
 

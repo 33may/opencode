@@ -68,6 +68,7 @@ type ReadDef = Tool.InferDef<typeof ReadTool>
 type State = {
   custom: Tool.Def[]
   builtin: Tool.Def[]
+  repoResearch: Tool.Def[]
   task: TaskDef
   read: ReadDef
 }
@@ -272,6 +273,7 @@ export const layer: Layer.Layer<
           ],
           task: tool.task,
           read: tool.read,
+          repoResearch: [tool.repo_clone, tool.repo_overview],
         }
       }),
     )
@@ -320,7 +322,16 @@ export const layer: Layer.Layer<
     })
 
     const tools: Interface["tools"] = Effect.fn("ToolRegistry.tools")(function* (input) {
-      const filtered = (yield* all()).filter((tool) => {
+      const s = yield* InstanceState.get(state)
+      const filtered = [
+        ...s.builtin,
+        ...s.custom,
+        ...(!flags.experimentalScout
+          ? s.repoResearch.filter(
+              (tool) => Permission.evaluate(tool.id, "*", input.agent.permission).action !== "deny",
+            )
+          : []),
+      ].filter((tool) => {
         if (tool.id === WebSearchTool.id) {
           return webSearchEnabled(input.providerID, { exa: flags.enableExa, parallel: flags.enableParallel })
         }
