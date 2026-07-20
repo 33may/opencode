@@ -40,6 +40,7 @@ import { Heap } from "./cli/heap"
 import { drizzle } from "drizzle-orm/bun-sqlite"
 import { ensureProcessMetadata } from "@opencode-ai/core/util/opencode-process"
 import { isRecord } from "@/util/record"
+import { TalkCommand } from "./cli/cmd/talk"
 
 const processMetadata = ensureProcessMetadata("main")
 
@@ -178,6 +179,7 @@ const cli = yargs(args)
   .command(SessionCommand)
   .command(PluginCommand)
   .command(DbCommand)
+  .command(TalkCommand)
   .fail((msg, err) => {
     if (
       msg?.startsWith("Unknown argument") ||

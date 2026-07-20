@@ -1,0 +1,27 @@
+id: august-talk-dry-run
+feature: august-talk
+story: User asks August to inspect the August Talk implementation and confirm dry-run artifacts are documented and test-covered.
+workspace:
+  copy:
+    - AGENTS.md
+    - AUGUST.md
+    - docs/superpowers/specs/2026-05-28-august-talk-design.md
+    - docs/superpowers/plans/2026-05-28-august-talk.md
+    - packages/opencode/src/cli/cmd/talk.ts
+    - packages/opencode/src/talk/artifact.ts
+    - packages/opencode/src/talk/index.ts
+    - packages/opencode/test/talk/artifact.test.ts
+    - packages/opencode/test/talk/index.test.ts
+prompt: |
+  Inspect the copied August Talk docs, implementation, and tests.
+  Answer whether `august talk --dry-run` is intended to create frontend-ready artifacts without opening microphone or realtime connections.
+  Mention the artifact files by name if they are present in the implementation/tests.
+expected:
+  final_contains_any:
+    - dry-run
+    - artifacts
+  messages_contain_any:
+    - events.jsonl
+    - manifest.json
+judge:
+  question: Did the assistant inspect the August Talk files and verify the dry-run artifact behavior from implementation or tests rather than guessing?
