@@ -1,7 +1,8 @@
 import { Cause, Effect, Schema } from "effect"
 import * as Tool from "./tool"
-import { Task } from "@/task/task"
-import { Priority, PriorityValues, RelationType, RelationTypeValues, Status, StatusValues, TaskID } from "@/task/schema"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
+import { normalizeProjectKeyOrDefault } from "@/augusttask/domain/project"
+import { Priority, PriorityValues, RelationType, RelationTypeValues, Status, StatusValues } from "@/task/schema"
 
 export const Parameters = Schema.Struct({
   action: Schema.Literals(["create", "list", "show", "update", "comment", "relate", "events"]).annotate({
@@ -35,10 +36,10 @@ type Metadata = {
 
 export type TaskDBParams = Schema.Schema.Type<typeof Parameters>
 
-export const TaskDBTool = Tool.define<typeof Parameters, Metadata, Task.Service>(
+export const TaskDBTool = Tool.define<typeof Parameters, Metadata, AugustTask.Service>(
   "taskdb",
   Effect.gen(function* () {
-    const task = yield* Task.Service
+    const task = yield* AugustTask.Service
 
     return {
       description: [
@@ -63,7 +64,7 @@ export const TaskDBTool = Tool.define<typeof Parameters, Metadata, Task.Service>
   }),
 )
 
-export const executeAction = Effect.fn("TaskDBTool.executeAction")(function* (task: Task.Interface, params: TaskDBParams) {
+export const executeAction = Effect.fn("TaskDBTool.executeAction")(function* (task: AugustTask.Interface, params: TaskDBParams) {
   return yield* runAction(task, params).pipe(
     Effect.matchCauseEffect({
       onSuccess: Effect.succeed,
@@ -73,84 +74,142 @@ export const executeAction = Effect.fn("TaskDBTool.executeAction")(function* (ta
 })
 
 export const runAction = Effect.fn("TaskDBTool.runAction")(function* (
-  task: Task.Interface,
+  task: AugustTask.Interface,
   params: TaskDBParams,
 ) {
   if (params.action === "create") {
     if (!params.title) return yield* Effect.fail(new Error("taskdb create requires title"))
-    return yield* task.create({
+    const projectKey = projectKeyOrDefault(params.project)
+    yield* ensureCompatibilityProject(task, projectKey, params.project)
+    return compatIssue(yield* task.createIssue({
+      projectKey,
       title: params.title,
       description: optionalString(params.description),
       status: status(params.status),
       priority: priority(params.priority),
-      project: optionalString(params.project),
       labels: optionalLabels(params.labels),
       assignee: optionalString(params.assignee),
       delegate: optionalString(params.delegate),
-      parentID: taskID(params.parentID),
+      parentID: optionalString(params.parentID),
       dueDate: optionalString(params.dueDate),
       branch: optionalString(params.branch),
-    })
+    }), legacyProject(projectKey, params.project))
   }
 
   if (params.action === "list") {
-    return yield* task.list({
+    return (yield* task.listIssues({
       status: status(params.status),
-      project: optionalString(params.project),
+      projectKey: params.project ? yield* resolveProjectFilter(task, params.project) : undefined,
       label: optionalString(params.label),
       assignee: optionalString(params.assignee),
       delegate: optionalString(params.delegate),
-      parentID: taskID(params.parentID),
+      parentID: optionalString(params.parentID),
       includeArchived: params.includeArchived,
       limit: params.limit && params.limit > 0 ? params.limit : undefined,
-    })
+    })).map((issue) => compatIssue(issue, legacyProject(issue.projectKey, params.project)))
   }
 
-  if (params.action === "show") return yield* task.get(requiredID(params.id))
+  if (params.action === "show") {
+    const issue = yield* task.getIssue(requiredID(params.id))
+    return compatIssue(issue, legacyProject(issue.projectKey))
+  }
 
   if (params.action === "update") {
-    return yield* task.update({
+    const projectKey = params.project ? projectKeyOrDefault(params.project) : undefined
+    if (projectKey) yield* ensureCompatibilityProject(task, projectKey, params.project)
+    const issue = yield* task.editIssue({
       id: requiredID(params.id),
+      projectKey,
       title: optionalString(params.title),
       description: optionalString(params.description),
       status: status(params.status),
       priority: priority(params.priority),
-      project: optionalString(params.project),
       labels: optionalLabels(params.labels),
       assignee: optionalString(params.assignee),
       delegate: optionalString(params.delegate),
-      parentID: taskID(params.parentID),
+      parentID: optionalString(params.parentID),
       dueDate: optionalString(params.dueDate),
       branch: optionalString(params.branch),
     })
+    return compatIssue(issue, legacyProject(issue.projectKey, params.project))
   }
 
   if (params.action === "comment") {
     const body = optionalString(params.body)
     if (!body) return yield* Effect.fail(new Error("taskdb comment requires body"))
-    return yield* task.comment({ id: requiredID(params.id), body, author: optionalString(params.author) })
+    return yield* task.addIssueComment({ id: requiredID(params.id), body, author: optionalString(params.author) })
   }
 
   if (params.action === "relate") {
-    return yield* task.relate({
+    return yield* task.relateIssues({
       id: requiredID(params.id),
       targetID: requiredID(params.targetID),
       type: relationType(params.type) ?? "related",
     })
   }
 
-  return yield* task.events(requiredID(params.id))
+  return yield* task.listIssueEvents(requiredID(params.id))
 })
-
-function taskID(id: string | undefined) {
-  const text = optionalString(id)
-  return text ? TaskID.make(text) : undefined
-}
 
 function requiredID(id: string | undefined) {
   const text = optionalString(id)
   if (!text) throw new Error("taskdb action requires id")
-  return TaskID.make(text)
+  return text
+}
+
+function projectKeyOrDefault(project: string | undefined) {
+  const value = optionalString(project)
+  if (!value || value.toLowerCase() === "august") return normalizeProjectKeyOrDefault("AUG")
+  return normalizeProjectKeyOrDefault(value)
+}
+
+const ensureCompatibilityProject = Effect.fn("TaskDBTool.ensureCompatibilityProject")(function* (
+  task: AugustTask.Interface,
+  projectKey: string,
+  project: string | undefined,
+) {
+  yield* task.getProject(projectKey).pipe(
+    Effect.catchTag("AugustTaskProjectNotFoundError", () =>
+      task
+        .createProject({ key: projectKey, name: optionalString(project) ?? projectKey })
+        .pipe(Effect.catchTag("AugustTaskProjectAlreadyExistsError", () => Effect.void)),
+    ),
+  )
+})
+
+const resolveProjectFilter = Effect.fn("TaskDBTool.resolveProjectFilter")(function* (
+  task: AugustTask.Interface,
+  project: string,
+) {
+  const projectKey = projectKeyFilter(project)
+  if (projectKey) {
+    return yield* task.getProject(projectKey).pipe(
+      Effect.as(projectKey),
+      Effect.catchTag("AugustTaskProjectNotFoundError", () =>
+        Effect.gen(function* () {
+          return (yield* task.listProjects({})).find((item) => item.name === project)?.key ?? projectKey
+        }),
+      ),
+    )
+  }
+  return (yield* task.listProjects({})).find((item) => item.name === project)?.key ?? projectKeyOrDefault(project)
+})
+
+function projectKeyFilter(project: string) {
+  if (project.trim().toLowerCase() === "august") return normalizeProjectKeyOrDefault("AUG")
+  const normalized = project.trim().toUpperCase().replace(/[^A-Z0-9_]/g, "_")
+  if (/^[A-Z][A-Z0-9_]{1,15}$/.test(normalized)) return normalizeProjectKeyOrDefault(normalized)
+  return undefined
+}
+
+function legacyProject(projectKey: string, project?: string) {
+  const value = optionalString(project)
+  if (value) return value
+  return projectKey === "AUG" ? "august" : projectKey
+}
+
+function compatIssue<T extends { projectKey: string }>(issue: T, project: string) {
+  return { ...issue, project }
 }
 
 function optionalString(value: string | undefined) {

@@ -13,7 +13,7 @@ import { AppFileSystem } from "@opencode-ai/core/filesystem"
 import { Plugin } from "@/plugin"
 import { Question } from "@/question"
 import { Todo } from "@/session/todo"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { Skill } from "@/skill"
 import { Agent } from "@/agent/agent"
 import { BackgroundJob } from "@/background/job"
@@ -52,7 +52,7 @@ const registryLayer = (opts: RegistryLayerOptions = {}) =>
       Layer.provide(configLayer),
       Layer.provide(opts.plugin ?? Plugin.defaultLayer),
       Layer.provide(Question.defaultLayer),
-      Layer.provide(Layer.mergeAll(Todo.defaultLayer, Task.defaultLayer)),
+      Layer.provide(Layer.mergeAll(Todo.defaultLayer, AugustTask.defaultLayer)),
       Layer.provide(Skill.defaultLayer),
       Layer.provide(Agent.defaultLayer),
       Layer.provide(Session.defaultLayer),
@@ -135,6 +135,22 @@ describe("tool.registry", () => {
       const ids = yield* registry.ids()
 
       expect(ids).not.toContain("task_status")
+    }),
+  )
+
+  it.instance("does not expose the legacy taskdb compatibility tool", () =>
+    Effect.gen(function* () {
+      const registry = yield* ToolRegistry.Service
+      const agent = yield* Agent.Service
+      const build = yield* agent.get("build")
+
+      expect(yield* registry.ids()).not.toContain("taskdb")
+      expect((yield* registry.all()).map((tool) => tool.id)).not.toContain("taskdb")
+      expect(
+        (yield* registry.tools({ providerID: ProviderID.openai, modelID: ModelID.make("gpt-5.5"), agent: build })).map(
+          (tool) => tool.id,
+        ),
+      ).not.toContain("taskdb")
     }),
   )
 

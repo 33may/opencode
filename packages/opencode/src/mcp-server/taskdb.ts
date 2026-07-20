@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { Effect } from "effect"
 import * as z from "zod/v4"
 import { Database } from "@/storage/db"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { executeAction } from "@/tool/taskdb"
 
 export const server = new McpServer({ name: "august-taskdb", version: "1.0.0" })
@@ -45,7 +45,7 @@ server.registerTool(
         type: "text" as const,
         text: JSON.stringify(
           await Effect.runPromise(
-            Task.Service.use((task) => executeAction(task, params)).pipe(Effect.provide(Task.defaultLayer)),
+            AugustTask.Service.use((task) => executeAction(task, params)).pipe(Effect.provide(AugustTask.defaultLayer)),
           ),
           null,
           2,

@@ -1,0 +1,19 @@
+id: augusttask-tool
+feature: augusttask
+story: Agent uses AugustTask semantic project and issue tools instead of Linear.
+prompt: |
+  Use AugustTask tools, not Linear and not shell, to create project "VALIDATION" named "Validation".
+  Then create an issue titled "Validate AugustTask" in project "VALIDATION" with label "augusttask".
+  Then list issues in project "VALIDATION" with label "augusttask" and reply with the created issue id and title.
+expected:
+  final_contains_any:
+    - VALIDATION-1
+    - Validate AugustTask
+  messages_contain_any:
+    - Validate AugustTask
+  tool_calls:
+    - augusttask_create_project
+    - augusttask_create_issue
+    - augusttask_list_issues
+judge:
+  question: Did the assistant use AugustTask semantic tools to create and inspect a local project issue instead of relying on Linear?

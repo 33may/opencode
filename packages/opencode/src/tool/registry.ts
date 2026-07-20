@@ -8,7 +8,6 @@ import { GrepTool } from "./grep"
 import { ReadTool } from "./read"
 import { TaskTool } from "./task"
 import { TodoWriteTool } from "./todo"
-import { TaskDBTool } from "./taskdb"
 import { WebFetchTool } from "./webfetch"
 import { WriteTool } from "./write"
 import { InvalidTool } from "./invalid"
@@ -43,7 +42,7 @@ import { InstanceState } from "@/effect/instance-state"
 import { EffectBridge } from "@/effect/bridge"
 import { Question } from "../question"
 import { Todo } from "../session/todo"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { LSP } from "@/lsp/lsp"
 import { Instruction } from "../session/instruction"
 import { AppFileSystem } from "@opencode-ai/core/filesystem"
@@ -88,7 +87,7 @@ export const layer: Layer.Layer<
   | Plugin.Service
   | Question.Service
   | Todo.Service
-  | Task.Service
+  | AugustTask.Service
   | Agent.Service
   | Skill.Service
   | Session.Service
@@ -122,7 +121,6 @@ export const layer: Layer.Layer<
     const read = yield* ReadTool
     const question = yield* QuestionTool
     const todo = yield* TodoWriteTool
-    const taskdb = yield* TaskDBTool
     const lsptool = yield* LspTool
     const plan = yield* PlanExitTool
     const webfetch = yield* WebFetchTool
@@ -237,7 +235,6 @@ export const layer: Layer.Layer<
           task: Tool.init(task),
           fetch: Tool.init(webfetch),
           todo: Tool.init(todo),
-          taskdb: Tool.init(taskdb),
           search: Tool.init(websearch),
           repo_clone: Tool.init(repoClone),
           repo_overview: Tool.init(repoOverview),
@@ -262,7 +259,6 @@ export const layer: Layer.Layer<
             tool.task,
             tool.fetch,
             tool.todo,
-            tool.taskdb,
             tool.search,
             ...(flags.experimentalScout ? [tool.repo_clone, tool.repo_overview] : []),
             tool.skill,
@@ -381,7 +377,7 @@ export const defaultLayer = Layer.suspend(() =>
       Layer.provide(Config.defaultLayer),
       Layer.provide(Plugin.defaultLayer),
       Layer.provide(Question.defaultLayer),
-      Layer.provide(Layer.mergeAll(Todo.defaultLayer, Task.defaultLayer)),
+      Layer.provide(Layer.mergeAll(Todo.defaultLayer, AugustTask.defaultLayer)),
       Layer.provide(Skill.defaultLayer),
       Layer.provide(Agent.defaultLayer),
       Layer.provide(Session.defaultLayer),

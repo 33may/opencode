@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import path from "node:path"
+import fs from "node:fs/promises"
 
 type Scenario = {
   id: string
@@ -54,6 +55,7 @@ try {
     },
   })
   const sessionID = String(asRecord(session).id)
+  await waitForExpectedMcpServers(baseUrl, workspace, scenario)
   const prompt = await api(baseUrl, workspace, `/session/${sessionID}/message`, {
     method: "POST",
     body: {
@@ -142,6 +144,28 @@ function parseScenario(input: string): Scenario {
 async function prepareRunDirectory(runDir: string, workspace: string, scenario: Scenario) {
   await Bun.write(path.join(runDir, ".keep"), "")
   await Bun.write(path.join(workspace, ".keep"), "")
+  await fs.mkdir(path.join(workspace, ".opencode"), { recursive: true })
+  await Bun.write(
+    path.join(workspace, ".opencode", "opencode.jsonc"),
+    JSON.stringify(
+      {
+        $schema: "https://opencode.ai/config.json",
+        mcp: {
+          augusttask: {
+            type: "local",
+            command: [
+              "bash",
+              "-lc",
+              `cd ${shellQuote(root)} && exec bun --conditions=browser packages/opencode/src/mcp-server/augusttask.ts`,
+            ],
+            enabled: true,
+          },
+        },
+      },
+      undefined,
+      2,
+    ),
+  )
   await Bun.write(path.join(runDir, "scenario.yaml"), await Bun.file(path.resolve(scenarioPath!)).text())
   for (const file of scenario.workspace?.copy ?? []) {
     const from = path.join(root, file)
@@ -163,6 +187,30 @@ async function waitForServerUrl(server: Bun.Subprocess<"ignore", "pipe", "pipe">
     if (match) return match[1]
   }
   throw new Error("timed out waiting for opencode server")
+}
+
+async function waitForExpectedMcpServers(baseUrl: string, workspace: string, scenario: Scenario) {
+  const servers = [
+    ...new Set(
+      (scenario.expected?.tool_calls ?? [])
+        .map((tool) => tool.match(/^([a-zA-Z0-9-]+)_/)?.[1])
+        .filter((server): server is string => Boolean(server)),
+    ),
+  ]
+  if (!servers.length) return
+
+  const timeout = Date.now() + 20_000
+  let lastStatus: unknown
+  while (Date.now() < timeout) {
+    lastStatus = await api(baseUrl, workspace, "/mcp")
+    const status = asRecord(lastStatus)
+    if (servers.every((server) => asRecord(status[server]).status === "connected")) return
+    await Bun.sleep(250)
+  }
+
+  throw new Error(
+    `timed out waiting for expected MCP servers to connect: ${servers.join(", ")}\nLast /mcp status: ${JSON.stringify(lastStatus)}`,
+  )
 }
 
 async function api(baseUrl: string, directory: string, endpoint: string, init?: { method?: string; body?: unknown }) {
@@ -267,6 +315,10 @@ function containsAny(value: string, needles: string[]) {
 
 function asRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+}
+
+function shellQuote(value: string) {
+  return `'${value.replaceAll("'", "'\\''")}'`
 }
 
 function collectText(value: unknown): string {

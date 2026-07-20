@@ -20,7 +20,7 @@ import { SessionStatus } from "@/session/status"
 import { Instruction } from "@/session/instruction"
 import { Todo } from "@/session/todo"
 import { Skill } from "@/skill"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { ToolRegistry } from "@/tool/registry"
 import * as Truncate from "@/tool/truncate"
 import { Ripgrep } from "@/file/ripgrep"
@@ -37,7 +37,7 @@ export const registryLayer = () =>
       ),
       Layer.provide(Plugin.defaultLayer),
       Layer.provide(Question.defaultLayer),
-      Layer.provide(Layer.mergeAll(Todo.defaultLayer, Task.defaultLayer)),
+      Layer.provide(Layer.mergeAll(Todo.defaultLayer, AugustTask.defaultLayer)),
       Layer.provide(Skill.defaultLayer),
       Layer.provide(Agent.defaultLayer),
       Layer.provide(Session.defaultLayer),

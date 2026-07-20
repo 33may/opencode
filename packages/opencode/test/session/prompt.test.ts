@@ -21,7 +21,7 @@ import { Image } from "../../src/image/image"
 import { ModelID, ProviderID } from "../../src/provider/schema"
 import { Question } from "../../src/question"
 import { Todo } from "../../src/session/todo"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { Session } from "@/session/session"
 import { SessionMessageTable } from "../../src/session/session.sql"
 import { LLM } from "../../src/session/llm"
@@ -188,7 +188,7 @@ function makePrompt(input?: { processor?: "blocking" }) {
   const question = Question.layer.pipe(Layer.provideMerge(deps))
   const todo = Todo.layer.pipe(Layer.provideMerge(deps))
   const registry = ToolRegistry.layer.pipe(
-    Layer.provide(Task.defaultLayer),
+    Layer.provide(AugustTask.defaultLayer),
     Layer.provide(Skill.defaultLayer),
     Layer.provide(FetchHttpClient.layer),
     Layer.provide(CrossSpawnSpawner.defaultLayer),

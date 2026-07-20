@@ -30,7 +30,7 @@ export const TaskIssueTable = sqliteTable(
     time_archived: integer(),
   },
   (table) => [
-    uniqueIndex("task_issue_sequence_idx").on(table.sequence),
+    index("task_issue_sequence_idx").on(table.sequence),
     index("task_issue_status_idx").on(table.status),
     index("task_issue_project_idx").on(table.project),
     index("task_issue_parent_idx").on(table.parent_id),

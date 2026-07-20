@@ -23,7 +23,7 @@ import { Discovery } from "@/skill/discovery"
 import { Question } from "@/question"
 import { Permission } from "@/permission"
 import { Todo } from "@/session/todo"
-import { Task } from "@/task/task"
+import { AugustTask } from "@/augusttask/service/augusttask-service"
 import { Session } from "@/session/session"
 import { SessionStatus } from "@/session/status"
 import { SessionRunState } from "@/session/run-state"
@@ -60,7 +60,7 @@ import { BackgroundJob } from "@/background/job"
 import { EventV2Bridge } from "@/event-v2-bridge"
 import { RuntimeFlags } from "@/effect/runtime-flags"
 
-const TaskRuntimeLayer = Layer.mergeAll(Todo.defaultLayer, Task.defaultLayer)
+const TaskRuntimeLayer = Layer.mergeAll(Todo.defaultLayer, AugustTask.defaultLayer)
 
 export const AppLayer = Layer.mergeAll(
   Npm.defaultLayer,
