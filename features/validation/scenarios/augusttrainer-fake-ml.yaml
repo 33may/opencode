@@ -19,6 +19,8 @@ prompt: |
   - use val_loss as the metric, lower is better
   - keep train.py and README.md protected
   - record results in results.tsv and results.jsonl
+  - write augusttrainer/verifier.md with a critical check of metric parsing, protected files, and the keep decision
+  - write augusttrainer/dashboard.md with the current best run, metric trend, verifier status, and next experiment
   - change only model_config.json for the one hypothesis iteration
   - for the one hypothesis iteration, set quality_bonus in model_config.json to 0.4
   - do not run quality_bonus 0.2, quality_bonus 0.6, or any extra hypothesis
@@ -37,6 +39,8 @@ expected:
     - augusttrainer/flow.md
     - augusttrainer/results.tsv
     - augusttrainer/results.jsonl
+    - augusttrainer/verifier.md
+    - augusttrainer/dashboard.md
     - quality_bonus
     - 0.600000
   files_exist:
@@ -44,11 +48,15 @@ expected:
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.tsv
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/decisions.md
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/verifier.md
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/dashboard.md
   files_contain:
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/flow.md::python3 train.py
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/flow.md::val_loss
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.tsv::0.600000
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl::quality_bonus
     - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/results.jsonl::metric
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/verifier.md::protected
+    - features/validation/fixtures/augusttrainer-fake-ml/augusttrainer/dashboard.md::current best
 judge:
   question: Did AugustTrainer create the lab notebook contract, run the fake metric flow, and stop after the requested bounded validation iteration?

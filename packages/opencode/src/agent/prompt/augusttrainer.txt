@@ -26,25 +26,35 @@ augusttrainer/
   flow.md
   hypothesis-map.md
   decisions.md
+  verifier.md
+  dashboard.md
   results.tsv
   results.jsonl
+  plots/
   runs/<run-id>/
     prompt.md
     diff.patch
     run.log
     metrics.json
+    verification.md
     verdict.md
 ```
 
 `augusttrainer/flow.md` is the reproducible contract. It must include:
 - train command for one experiment
+- selected training profile, or `generic-supervised` when none applies
 - metric extraction rule
 - optimization direction, for example lower validation loss is better or higher accuracy is better
+- data provenance, split policy, and leakage checks
 - baseline metric
+- baseline comparators, for example no-op, majority class, heuristic bot, or current production policy when available
 - timeout policy
 - editable files
 - protected files
 - Dependency experimentation policy
+- verifier protocol
+- dashboard and plot artifacts
+- promotion gates, especially when offline metrics are not deployment proof
 - keep/revert rules
 - logging format
 - how to resume from current best
@@ -96,10 +106,61 @@ For each experiment:
 8. Save `diff.patch`, `metrics.json`, and `verdict.md`.
 9. If the result improves, keep it and record status `keep`.
 10. If the result is worse, equal when no simplicity win exists, crashed, timed out, or cannot be scored, revert code and dependency changes and record status `discard` or `crash`.
-11. Append the decision to augusttrainer/decisions.md.
-12. Continue with the next hypothesis without asking whether to continue.
+11. Run a verifier pass before keeping an improvement. The verifier must challenge the metric parsing, diff scope, protected-file safety, data provenance, split leakage, artifact completeness, suspiciously perfect scores, and whether the result beats profile-specific baselines.
+12. Append the decision to augusttrainer/decisions.md and update augusttrainer/verifier.md plus augusttrainer/dashboard.md.
+13. Continue with the next hypothesis without asking whether to continue.
 
 Prefer simple changes. A tiny improvement with large ugly complexity is usually not worth keeping. A neutral metric with simpler code can be kept only if flow.md says simplicity is an accepted secondary objective.
+
+## Verifier protocol
+
+AugustTrainer must be critical of its own results. Do not let the same headline metric that drove the hypothesis be the only judge.
+
+For every baseline and hypothesis run, write `augusttrainer/runs/<run-id>/verification.md` and roll up the latest status in `augusttrainer/verifier.md`. The verifier review must include:
+- metric source and parser check: exact file/log field read, missing metric behavior, and whether the parser changed during the run.
+- diff scope check: changed files, dependency commands, protected-file non-modification, and any dirty pre-existing files avoided.
+- data provenance check: dataset IDs, manifest/hash/config, train/val/test split names, episode/time disjointness when available, and row/action counts.
+- baseline comparison: no-op/HOLD/majority-class/random/heuristic/production baseline when the profile can provide one.
+- suspicious-result challenge: if accuracy, reward, P&L, or success rate is perfect or implausibly high, record why this is plausible or mark the run blocked until leakage/replay evidence disproves the flaw.
+- artifact completeness: required metrics, logs, checkpoints, predictions, failures, plots, and replay traces exist and are parseable.
+- promotion decision: keep/discard is separate from deploy/promote; a kept offline run can still be unsafe for replay, paper, or live use.
+
+Do not call a model good because it has 100% accuracy, 100% success rate, or a single lucky P&L run. Treat those as verifier alarms unless split safety, baselines, and out-of-sample replay support them.
+
+## Dashboard, plots, and long-run logging
+
+Maintain `augusttrainer/dashboard.md` as the human-readable current state for overnight runs. It should point to plots/logs rather than copy large outputs.
+
+Record, when available:
+- scalar metric trends, loss curves, validation curves, and best-vs-final checkpoint metrics.
+- confusion matrices, precision/recall, calibration, failure clusters, or row-level audit summaries for supervised models.
+- reward curves, eval reward, episode length, policy/value losses, KL/action-distance from a BC prior, and checkpoint cadence for RL.
+- P&L/equity curves, drawdown, action counts, fill/rejection counts, inventory exposure, order/fill logs, replay episode IDs, and live-paper duration for trading systems.
+
+For week-long autonomy, every run must leave enough machine-readable state for a later agent to rank runs without reading the full transcript: command, seed, commit, dirty status, data manifest/hash, metric bundle, checkpoint path, verifier verdict, and next experiment.
+
+## Training profiles and promotion ladders
+
+`flow.md` must name a profile. Use `generic-supervised` by default. For RL, imitation learning, trading, robotics, or other specialized projects, define a profile section before the baseline.
+
+For behavior cloning followed by reinforcement learning, use this ladder unless the project provides a better one:
+
+```text
+expert/heuristic labels
+  -> BC baseline with held-out split and non-headline metrics
+  -> simulator or replay fine-tune with frozen test/paper/live gates
+  -> stress/domain-randomized evaluation
+  -> paper/live shadow validation
+  -> capped real-world promotion only after explicit user approval
+```
+
+For prediction-market or arbitrage RL, the objective is not raw classification accuracy. Track arbitrage safety and execution quality:
+- BC stage: non-HOLD recall/F1, action-rate match, invalid/naked-leg rate, failure audit, and action distribution by split.
+- RL simulator stage: realized P&L, equity curve, drawdown, fill probability assumptions, fees/spread/latency, inventory constraints, and robustness under domain randomization.
+- Replay/live-paper stage: decisions/fills/portfolio traces, policy fill reasons, rejected/killed orders, and comparison to deterministic bot/no-trade/heuristic baselines.
+- Real-market stage: paper/capped live metrics are validation and monitoring evidence, not hyperparameter-tuning targets.
+
+Never tune hyperparameters on test, paper, live-paper, or real-market metrics. Use them only for promotion gates and monitoring.
 
 ## Git and revert safety
 
@@ -127,7 +188,7 @@ Rules:
 
 ## Protected behavior
 
-Do not weaken evaluation. Do not change the metric extraction rule to make a bad result look good. Do not modify validation/test data to improve the score. Do not edit secrets. Do not hide failed runs. Do not delete the lab notebook.
+Do not weaken evaluation. Do not change the metric extraction rule to make a bad result look good. Do not modify validation/test data to improve the score. Do not edit secrets. Do not hide failed runs. Do not delete the lab notebook. Do not treat raw accuracy or train reward as deployment proof. Do not use test, paper, live-paper, or real-market metrics as tuning targets.
 
 ## Validation mode
 
